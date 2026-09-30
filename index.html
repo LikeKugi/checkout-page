@@ -2,9 +2,892 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Checkout — settle your Cube &amp; Co. General Store order. A simulated, accessible checkout receipt.">
+    <meta name="theme-color" content="#f2ecdd">
+    <title>Checkout — Cube &amp; Co. General Store</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%3E%3Crect%20width='64'%20height='64'%20fill='%239d2b1e'/%3E%3Crect%20x='16'%20y='16'%20width='32'%20height='32'%20fill='%23f2ecdd'/%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+    <style>
+/* ================= foundations: letterpress ledger ================= */
+:root {
+    color-scheme: light;
+    --paper: #f2ecdd;
+    --panel: #faf6ea;
+    --paper-bright: #fffdf5;
+    --ink: #221e18;
+    --ink-2: #6a6250;
+    --line: #d8cdb2;
+    --red: #9d2b1e;
+    --red-dark: #802114;
+    --green: #2e6b3f;
+    --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    --serif: "Fraunces", "Iowan Old Style", Georgia, serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: var(--mono);
+    font-size: 16px;
+    line-height: 1.55;
+    color: var(--ink);
+    background:
+        repeating-linear-gradient(0deg, transparent 0 27px, rgba(34, 30, 24, .04) 27px 28px),
+        radial-gradient(1100px 520px at 85% -8%, rgba(168, 123, 34, .10), transparent 62%),
+        radial-gradient(900px 480px at -10% 110%, rgba(157, 43, 30, .07), transparent 60%),
+        var(--paper);
+    -webkit-tap-highlight-color: rgba(157, 43, 30, .18);
+}
+
+/* paper grain over everything, purely decorative */
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    pointer-events: none;
+    opacity: .05;
+    mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='180'%20height='180'%3E%3Cfilter%20id='n'%3E%3CfeTurbulence%20type='fractalNoise'%20baseFrequency='0.85'%20numOctaves='2'%20stitchTiles='stitch'/%3E%3C/filter%3E%3Crect%20width='180'%20height='180'%20filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+::selection { background: var(--red); color: #f7f2e4; }
+
+h1, h2 { text-wrap: balance; }
+img { max-width: 100%; display: block; }
+button { font: inherit; color: inherit; }
+[hidden] { display: none !important; }
+
+:focus-visible {
+    outline: 3px solid var(--red);
+    outline-offset: 2px;
+}
+
+.visually-hidden {
+    position: absolute !important;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    border: 0;
+    clip-path: inset(50%);
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.skip-link {
+    position: absolute;
+    left: 12px;
+    top: -64px;
+    z-index: 50;
+    padding: 10px 16px;
+    background: var(--ink);
+    color: #f7f2e4;
+    font: 600 13px/1 var(--mono);
+    text-decoration: none;
+    transition: top .2s ease;
+}
+
+.skip-link:focus-visible { top: 12px; }
+
+@media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *,
+    *::before,
+    *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+    }
+}
+/* ================= page grid + masthead ================= */
+.page {
+    position: relative;
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 38px 24px 60px;
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    column-gap: 32px;
+    row-gap: 16px;
+}
+
+/* ledger margin rule */
+.page::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: -16px;
+    width: 1.5px;
+    background: rgba(157, 43, 30, .35);
+}
+
+.mast-kicker {
+    grid-column: 1 / -1;
+    margin: 0;
+    font: 600 11px/1 var(--mono);
+    letter-spacing: .26em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+}
+
+h1 {
+    grid-column: 1;
+    grid-row: 2;
+    align-self: end;
+    margin: 0 0 4px;
+    font-family: var(--serif);
+    font-optical-sizing: auto;
+    font-weight: 850;
+    font-size: clamp(2.9rem, 6.2vw, 4.5rem);
+    line-height: .95;
+    letter-spacing: -.02em;
+    background: linear-gradient(180deg, transparent 66%, rgba(157, 43, 30, .28) 66%);
+}
+
+.mast-meta {
+    grid-column: 2;
+    grid-row: 2;
+    justify-self: end;
+    align-self: end;
+    margin: 0 0 6px;
+    font: 500 11.5px/1.7 var(--mono);
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    text-align: right;
+    color: var(--ink-2);
+}
+
+.mast-meta .order-no { color: var(--red); font-weight: 600; }
+
+/* ================= panels ================= */
+.panel {
+    background: var(--panel);
+    border: 2px solid var(--ink);
+    box-shadow: 7px 7px 0 rgba(34, 30, 24, .9);
+}
+
+#cart { grid-column: 1; grid-row: 3; align-self: start; }
+#pay  { grid-column: 2; grid-row: 3; align-self: start; }
+
+.panel-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px 20px 13px;
+    border-bottom: 2px solid var(--ink);
+}
+
+.panel-head .kicker {
+    margin: 0 0 6px;
+    font: 600 10px/1 var(--mono);
+    letter-spacing: .24em;
+    text-transform: uppercase;
+    color: var(--red);
+}
+
+.panel-head h2 {
+    margin: 0;
+    font-family: var(--serif);
+    font-optical-sizing: auto;
+    font-weight: 750;
+    font-size: 1.62rem;
+    line-height: 1.05;
+    letter-spacing: -.01em;
+}
+
+.panel-tag {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 8px;
+    border: 1.5px solid var(--ink);
+    background: var(--paper-bright);
+    font: 600 10px/1 var(--mono);
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+    transform: rotate(1.5deg);
+}
+
+.panel-tag svg { width: 11px; height: 11px; fill: var(--red); }
+
+.panel-body { padding: 18px 20px 20px; }
+
+/* shared 2-col form row */
+.form-row { display: grid; grid-template-columns: 1fr 1fr; column-gap: 14px; }
+
+/* ================= footer + live status ================= */
+.foot {
+    grid-column: 1 / -1;
+    margin-top: 26px;
+    padding-top: 16px;
+    border-top: 2px solid var(--ink);
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    font: 500 10.5px/1.7 var(--mono);
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+}
+
+.foot span::before { content: "✳ "; color: var(--red); }
+
+.visa-line {
+    grid-column: 1 / -1;
+    margin: 0;
+    padding: 9px 14px;
+    border: 1.5px dashed var(--line);
+    background: var(--paper-bright);
+    font: 500 12px/1.6 var(--mono);
+    color: var(--ink-2);
+}
+
+#checkout-status {
+    grid-column: 1 / -1;
+    margin: 0;
+    padding: 10px 14px;
+    border: 1.5px solid var(--ink);
+    background: var(--paper-bright);
+    font: 500 13px/1.5 var(--mono);
+}
+
+#checkout-status:empty { display: none; }
+
+#checkout-status.ok { color: var(--green); border-color: var(--green); }
+#checkout-status.err { color: var(--red); border-color: var(--red); }
+
+/* ================= responsive ================= */
+@media (max-width: 880px) {
+    .page {
+        grid-template-columns: minmax(0, 1fr);
+        padding: 28px 18px 48px;
+    }
+    .page::before { left: -12px; }
+    h1, .mast-meta, #cart, #pay { grid-column: 1; grid-row: auto; }
+    .mast-meta { justify-self: start; text-align: left; margin-top: 2px; }
+    #pay { order: 2; }
+    #cart { order: 1; }
+    .foot { flex-direction: column; gap: 4px; }
+}
+
+@media (max-width: 460px) {
+    .form-row { grid-template-columns: 1fr; }
+    .mast-meta { font-size: 10.5px; }
+}
+/* ================= cart: receipt aesthetic ================= */
+.product { display: flex; align-items: flex-start; gap: 14px; }
+
+.product-frame {
+    position: relative;
+    flex: none;
+    border: 2px solid var(--ink);
+    background: var(--paper-bright);
+    padding: 5px;
+    box-shadow: 3px 3px 0 rgba(34, 30, 24, .8);
+    transform: rotate(-1.5deg);
+}
+
+.product-frame img {
+    width: 116px;
+    height: 73px;
+    object-fit: cover;
+    filter: sepia(.24) contrast(1.02);
+}
+
+.product-info { min-width: 0; flex: 1; }
+
+.product-title { margin: 2px 0 0; }
+
+.product-title a {
+    color: inherit;
+    text-decoration: none;
+    font-family: var(--serif);
+    font-optical-sizing: auto;
+    font-weight: 680;
+    font-size: 1.06rem;
+    letter-spacing: -.005em;
+    background-image: linear-gradient(90deg, var(--red) 0 100%);
+    background-repeat: no-repeat;
+    background-size: 0% 2px;
+    background-position: 0 100%;
+    transition: background-size .25s ease;
+}
+
+.product-title a:hover,
+.product-title a:focus-visible { background-size: 100% 2px; }
+
+.product-desc {
+    margin: 5px 0 10px;
+    font-size: 12px;
+    color: var(--ink-2);
+}
+
+.stepper {
+    display: inline-flex;
+    align-items: stretch;
+    border: 1.5px solid var(--ink);
+    background: var(--paper-bright);
+    touch-action: manipulation;
+}
+
+.stepper button {
+    width: 30px;
+    min-height: 30px;
+    border: 0;
+    background: var(--paper-bright);
+    font-family: var(--mono);
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1;
+    cursor: pointer;
+    transition: background-color .15s ease, color .15s ease;
+}
+
+.stepper button:hover { background: var(--ink); color: #f7f2e4; }
+.stepper button:disabled { opacity: .45; cursor: not-allowed; }
+.stepper button:disabled:hover { background: var(--paper-bright); color: var(--ink); }
+
+.stepper output {
+    min-width: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-inline: 1.5px solid var(--ink);
+    font: 600 13px/1 var(--mono);
+    font-variant-numeric: tabular-nums;
+    padding: 6px 2px;
+}
+
+.product-price {
+    flex: none;
+    align-self: flex-start;
+    font: 600 13px/1.2 var(--mono);
+    font-variant-numeric: tabular-nums;
+}
+
+.product-price s { display: block; color: var(--ink-2); font-weight: 400; font-size: 11.5px; }
+
+/* perforated tear before totals */
+.tear {
+    height: 0;
+    margin: 18px -34px 16px -34px;
+    border-top: 2px dashed var(--line);
+    position: relative;
+}
+
+.tear::before,
+.tear::after {
+    content: "";
+    position: absolute;
+    top: -11px;
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--ink);
+    border-radius: 50%;
+    background: var(--paper);
+}
+
+.tear::before { left: -11px; }
+.tear::after { right: -11px; }
+
+/* ================= totals ================= */
+.totals {
+    margin: 0 0 14px;
+    font-variant-numeric: tabular-nums;
+}
+
+.totals div {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 3px 0;
+    font: 500 12.5px/1.5 var(--mono);
+    color: var(--ink-2);
+}
+
+.totals div.grand {
+    margin-top: 7px;
+    padding: 9px 0 1px;
+    border-top: 2px solid var(--ink);
+    color: var(--ink);
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+
+.totals div.grand b { font-size: 17px; }
+
+/* barcode footer */
+.barcode {
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1.5px dashed var(--line);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 10px;
+}
+
+.barcode .bars {
+    width: 130px;
+    height: 26px;
+    background-image: repeating-linear-gradient(90deg,
+        var(--ink) 0 2px, transparent 2px 4px,
+        var(--ink) 4px 5px, transparent 5px 8px,
+        var(--ink) 8px 11px, transparent 11px 13px);
+}
+
+.barcode figcaption {
+    font: 500 9.5px/1.4 var(--mono);
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+    text-align: right;
+}
+/* ================= form ================= */
+.field { margin: 0 0 15px; }
+
+.field label {
+    display: block;
+    margin: 0 0 6px;
+    font: 600 11px/1.4 var(--mono);
+    letter-spacing: .16em;
+    text-transform: uppercase;
+}
+
+.req {
+    color: var(--red);
+    margin-left: 2px;
+    font-weight: 700;
+}
+
+.field input[type="text"] {
+    width: 100%;
+    padding: 10px 12px;
+    border: 2px solid var(--ink);
+    border-radius: 0;
+    background: var(--paper-bright);
+    color: var(--ink);
+    font: 500 14px/1.4 var(--mono);
+    transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+}
+
+.field input[type="text"]::placeholder { color: #a79d86; opacity: 1; }
+
+.field input[type="text"]:hover { border-color: var(--red-dark); }
+
+.field input[type="text"]:focus {
+    outline: none;
+    border-color: var(--red);
+    box-shadow: 3px 3px 0 rgba(157, 43, 30, .9);
+    transform: translate(-1px, -1px);
+}
+
+.field input[type="text"]:focus-visible {
+    outline: 3px solid var(--red);
+    outline-offset: 2px;
+}
+
+.field input.invalid { border-color: var(--red); }
+
+.field .error {
+    display: block;
+    min-height: 0;
+    margin: 6px 0 0;
+    font: 500 11.5px/1.4 var(--mono);
+    color: var(--red);
+}
+
+.help {
+    margin: 6px 0 0;
+    font: 500 11.5px/1.45 var(--mono);
+    color: var(--ink-2);
+}
+
+.form-legend {
+    margin: 0 0 14px;
+    font: 600 10px/1.5 var(--mono);
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+}
+
+.form-legend .req { letter-spacing: 0; }
+
+/* submit — letterpress plate */
+.pay-btn {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 6px;
+    padding: 13px 20px;
+    border: 2px solid var(--ink);
+    background: var(--ink);
+    color: #f7f2e4;
+    font: 600 12.5px/1 var(--mono);
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    cursor: pointer;
+    box-shadow: 5px 5px 0 rgba(157, 43, 30, .9);
+    touch-action: manipulation;
+    transition: transform .12s ease, box-shadow .12s ease, background-color .15s ease;
+}
+
+.pay-btn:hover { background: #000; }
+.pay-btn:active { transform: translate(3px, 3px); box-shadow: 2px 2px 0 rgba(157, 43, 30, .9); }
+
+.pay-btn[disabled] { opacity: .65; cursor: progress; }
+
+.pay-btn svg { width: 14px; height: 14px; fill: currentColor; flex: none; }
+
+/* rubber stamp on success */
+#pay.is-approved { position: relative; }
+
+.stamp {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    z-index: 3;
+    margin: 0;
+    padding: 7px 12px;
+    border: 3px solid var(--red);
+    border-radius: 4px;
+    color: var(--red);
+    font: 800 15px/1 var(--mono);
+    letter-spacing: .3em;
+    text-transform: uppercase;
+    transform: translateY(-50%) rotate(-8deg) scale(1.6);
+    opacity: 0;
+    mix-blend-mode: multiply;
+    pointer-events: none;
+    animation: stamp .38s cubic-bezier(.2, 1.6, .35, 1) forwards;
+}
+
+@keyframes stamp {
+    from { transform: translateY(-50%) rotate(2deg) scale(1.9); opacity: 0; }
+    to   { transform: translateY(-50%) rotate(-8deg) scale(1); opacity: .92; }
+}
+    </style>
 </head>
 <body>
+<a class="skip-link" href="#pay">Skip to payment</a>
 
+<main class="page">
+
+    <p class="mast-kicker">Cube &amp; Co. General Store · Est. 1937 · Register 02</p>
+
+    <p class="mast-meta" translate="no">
+        <span class="order-no">Order №&nbsp;0451-C</span><br>
+        <time datetime="2026-09-30">Sep 30, 2026</time> · Clerk: R.&nbsp;Vance
+    </p>
+
+    <h1>Checkout</h1>
+    <section id="cart" aria-labelledby="cart-heading">
+
+        <header class="panel-head">
+            <div>
+                <p class="kicker">01 · Manifest</p>
+                <h2 id="cart-heading">Your Cart</h2>
+            </div>
+            <p class="panel-tag">
+                <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 0l1.8 5.1L16 5.5l-4.2 3.4 1.4 5.1L8 11.1 2.8 14l1.4-5.1L0 5.5l6.2-.4z"/></svg>
+                1&nbsp;Item
+            </p>
+        </header>
+
+        <div class="panel-body">
+
+            <article class="product">
+                <figure class="product-frame">
+                    <img src="https://cdn.freecodecamp.org/curriculum/labs/cube.jpg"
+                         alt="Polished mahogany puzzle cube resting on a wooden workbench"
+                         width="307" height="192"
+                         fetchpriority="high">
+                </figure>
+
+                <div class="product-info">
+                    <h3 class="product-title"><a href="#pay">The Cubist — Limited Run</a></h3>
+                    <p class="product-desc">Machined brass &amp; walnut, 6&nbsp;×&nbsp;6&nbsp;×&nbsp;6&nbsp;cm. Serial №&nbsp;019 of 200.</p>
+
+                    <div class="stepper" role="group" aria-label="Quantity">
+                        <button type="button" class="qty-dec" aria-label="Decrease quantity" aria-controls="qty-output" aria-keyshortcuts="ArrowDown">−</button>
+                        <output id="qty-output" aria-live="polite" aria-label="Quantity">1</output>
+                        <button type="button" class="qty-inc" aria-label="Increase quantity" aria-controls="qty-output" aria-keyshortcuts="ArrowUp">+</button>
+                    </div>
+                </div>
+
+                <p class="product-price"><s>$69.00</s><span id="line-total">$62.00</span></p>
+            </article>
+
+            <div class="tear" role="presentation"></div>
+
+            <div class="totals">
+                <div><span id="subtotal-label">Subtotal</span><span id="subtotal">$62.00</span></div>
+                <div><span>Shipping</span><span>$4.00</span></div>
+                <div><span>Est. tax (8%)</span><span id="tax">$4.96</span></div>
+                <div class="grand"><span>Total due</span><b id="grand">$70.96</b></div>
+            </div>
+
+            <figure class="barcode">
+                <div class="bars" role="presentation"></div>
+                <figcaption>*&nbsp;Keep this portion for your records&nbsp;*</figcaption>
+            </figure>
+
+        </div>
+    </section>
+    <section id="pay" aria-labelledby="pay-heading">
+
+        <header class="panel-head">
+            <div>
+                <p class="kicker">02 · Settle Up</p>
+                <h2 id="pay-heading">Payment Information</h2>
+            </div>
+            <p class="panel-tag">
+                <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M9 0L2 9h4l-1 7 7-9H8l1-7z"/></svg>
+                Secure&nbsp;Sim
+            </p>
+        </header>
+
+        <form id="checkout-form" action="#" method="post" novalidate>
+            <div class="panel-body">
+
+                <p class="form-legend"><span class="req" aria-hidden="true">*</span>&nbsp;Required field</p>
+
+                <div class="field">
+                    <label for="card-name">Name on Card<span class="req" aria-hidden="true">*</span></label>
+                    <input id="card-name" name="card-name" type="text" required autocomplete="cc-name"
+                           spellcheck="false" autocapitalize="words" placeholder="Ada Lovelace…">
+                    <span class="error" id="card-name-error" aria-live="polite"></span>
+                </div>
+
+                <div class="field">
+                    <label for="card-number">Card Number<span class="req" aria-hidden="true">*</span></label>
+                    <input id="card-number" name="card-number" type="text" required autocomplete="cc-number"
+                           inputmode="numeric" spellcheck="false" placeholder="4242 4242 4242 4242…"
+                           maxlength="19" aria-describedby="card-number-help">
+                    <p class="help" id="card-number-help">16 digits, grouped in fours — e.g.&nbsp;4242&nbsp;4242&nbsp;4242&nbsp;4242.</p>
+                    <span class="error" id="card-number-error" aria-live="polite"></span>
+                </div>
+
+                <div class="form-row">
+                    <div class="field">
+                        <label for="card-exp">Expiry (MM/YY)<span class="req" aria-hidden="true">*</span></label>
+                        <input id="card-exp" name="card-exp" type="text" required autocomplete="cc-exp"
+                               inputmode="numeric" spellcheck="false" placeholder="08/28…" maxlength="5"
+                               aria-describedby="card-exp-help">
+                        <p class="help" id="card-exp-help">Format&nbsp;MM/YY.</p>
+                        <span class="error" id="card-exp-error" aria-live="polite"></span>
+                    </div>
+                    <div class="field">
+                        <label for="card-cvc">Security Code<span class="req" aria-hidden="true">*</span></label>
+                        <input id="card-cvc" name="card-cvc" type="text" required autocomplete="cc-csc"
+                               inputmode="numeric" spellcheck="false" placeholder="024…" maxlength="4"
+                               aria-describedby="card-cvc-help">
+                        <p class="help" id="card-cvc-help">3–4 digits from the signature strip.</p>
+                        <span class="error" id="card-cvc-error" aria-live="polite"></span>
+                    </div>
+                </div>
+
+                <button class="pay-btn" type="submit">
+                    <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M14.5 5.5h-1V3.9c0-1.6-1.3-2.9-2.9-2.9H5.4C3.8 1 2.5 2.3 2.5 3.9v1.6h-1L1 14.2c0 .5.3.8.8.8h12.4c.5 0 .8-.3.8-.8l-.5-8.7zM4.2 3.9c0-.7.5-1.2 1.2-1.2h5.2c.7 0 1.2.5 1.2 1.2v1.6H4.2V3.9z"/></svg>
+                    Pay&nbsp;<span id="btn-total">$70.96</span>
+                </button>
+
+            </div>
+        </form>
+    </section>
+    <p class="visa-line">Demo only — no real payment is processed, no data leaves this page. Try 4242&nbsp;4242&nbsp;4242&nbsp;4242 with any future expiry.</p>
+
+    <p id="checkout-status" role="status" aria-live="polite"></p>
+
+    <footer class="foot">
+        <span>Cube &amp; Co. General Store</span>
+        <span>Refunds within 30&nbsp;days</span>
+    </footer>
+
+</main>
+<script>
+"use strict";
+/* ---------- tiny helpers ---------- */
+const $ = (selector, root = document) => root.querySelector(selector);
+const usd = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
+
+function setCaret(input, position) {
+    try { input.setSelectionRange(position, position); } catch { /* no-op */ }
+}
+
+function errorIdFor(input) {
+    const described = (input.getAttribute("aria-describedby") || "").split(/\s+/).filter(Boolean);
+    const direct = described.find((id) => id.endsWith("-error"));
+    if (direct) return direct;
+    return described.length ? described[0].replace(/-help$/, "-error") : input.id + "-error";
+}
+
+function setState(input, message) {
+    const errorSlot = document.getElementById(errorIdFor(input));
+    if (message) {
+        input.classList.add("invalid");
+        input.setAttribute("aria-invalid", "true");
+        if (errorSlot) errorSlot.textContent = message;
+    } else {
+        input.classList.remove("invalid");
+        input.removeAttribute("aria-invalid");
+        if (errorSlot) errorSlot.textContent = "";
+    }
+}
+/* ---------- cart totals ---------- */
+const UNIT_PRICE = 62;
+const SHIPPING = 4;
+const TAX_RATE = 0.08;
+const MAX_QTY = 9;
+const state = { qty: 1 };
+
+function renderTotals() {
+    const subtotal = UNIT_PRICE * state.qty;
+    const tax = Math.round(subtotal * TAX_RATE * 100) / 100;
+    const grand = subtotal + SHIPPING + tax;
+    $("#line-total").textContent = usd.format(subtotal);
+    $("#subtotal").textContent = usd.format(subtotal);
+    $("#tax").textContent = usd.format(tax);
+    $("#grand").textContent = usd.format(grand);
+    $("#btn-total").textContent = usd.format(grand);
+}
+
+function setQty(next) {
+    state.qty = Math.min(MAX_QTY, Math.max(1, next));
+    $("#qty-output").textContent = String(state.qty);
+    $(".qty-dec").disabled = state.qty <= 1;
+    $(".qty-inc").disabled = state.qty >= MAX_QTY;
+    renderTotals();
+}
+
+$(".qty-dec").addEventListener("click", () => setQty(state.qty - 1));
+$(".qty-inc").addEventListener("click", () => setQty(state.qty + 1));
+setQty(1);
+/* ---------- live input formatting (caret-preserving, paste-safe) ---------- */
+function groupCardNumber(value) {
+    const digits = value.replace(/\D/g, "").slice(0, 16);
+    return digits.replace(/(.{4})/g, "$1 ").trim();
+}
+
+function formatExpiry(value) {
+    const digits = value.replace(/\D/g, "").slice(0, 4);
+    return digits.length > 2 ? digits.slice(0, 2) + "/" + digits.slice(2) : digits;
+}
+
+function installFormatter(input, format) {
+    input.addEventListener("input", () => {
+        const selection = input.selectionStart ?? input.value.length;
+        const digitsBeforeCaret = input.value.slice(0, selection).replace(/\D/g, "").length;
+        const formatted = format(input.value);
+        if (formatted === input.value) return;
+        input.value = formatted;
+        let caret = 0;
+        let seen = 0;
+        while (caret < formatted.length && seen < digitsBeforeCaret) {
+            if (/\d/.test(formatted[caret])) seen += 1;
+            caret += 1;
+        }
+        setCaret(input, caret);
+    });
+}
+
+const cardNumberInput = $("#card-number");
+const cardExpInput = $("#card-exp");
+const cardCvcInput = $("#card-cvc");
+
+installFormatter(cardNumberInput, groupCardNumber);
+installFormatter(cardExpInput, formatExpiry);
+
+cardCvcInput.addEventListener("input", () => {
+    const digits = cardCvcInput.value.replace(/\D/g, "").slice(0, 4);
+    if (digits !== cardCvcInput.value) {
+        const caret = Math.min(cardCvcInput.selectionStart ?? digits.length, digits.length);
+        cardCvcInput.value = digits;
+        setCaret(cardCvcInput, caret);
+    }
+});
+/* ---------- validation + simulated submit ---------- */
+const form = $("#checkout-form");
+const nameInput = $("#card-name");
+const statusRegion = $("#checkout-status");
+const payBtn = $(".pay-btn");
+const paySection = $("#pay");
+let payAttempted = false;
+
+const validators = {
+    "card-name": (value) => (value.trim().length >= 2 ? "" : "Enter the name printed on the card."),
+    "card-number": (value) => (value.replace(/\D/g, "").length === 16 ? "" : "Card number needs all 16 digits."),
+    "card-exp": (value) => {
+        const match = value.match(/^(0[1-9]|1[0-2])\/(\d{2})$/);
+        if (!match) return "Use MM/YY — e.g. 08/28.";
+        const expires = new Date(2000 + Number(match[2]), Number(match[1]), 1);
+        return expires > new Date() ? "" : "This card has expired — check the date.";
+    },
+    "card-cvc": (value) => (/^\d{3,4}$/.test(value) ? "" : "Enter the 3–4 digit code.")
+};
+
+const formInputs = [nameInput, cardNumberInput, cardExpInput, cardCvcInput];
+
+function validateField(input) {
+    const check = validators[input.name];
+    if (!check) return true;
+    const message = check(input.value);
+    setState(input, message);
+    return !message;
+}
+
+formInputs.forEach((input) => {
+    input.addEventListener("blur", () => {
+        if (input.value !== "" || payAttempted) validateField(input);
+    });
+    input.addEventListener("input", () => {
+        if (input.classList.contains("invalid")) validateField(input);
+    });
+});
+
+form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    payAttempted = true;
+
+    const firstInvalid = formInputs.find((input) => !validateField(input));
+
+    if (firstInvalid) {
+        const fieldLabel = (firstInvalid.labels[0] || { textContent: firstInvalid.id })
+            .textContent.replace("*", "").trim().toLowerCase();
+        statusRegion.className = "err";
+        statusRegion.textContent = "Check the highlighted fields — starting with " + fieldLabel + ".";
+        firstInvalid.focus();
+        return;
+    }
+
+    statusRegion.className = "ok";
+    statusRegion.textContent = "Payment approved — order № 0451-C is on its way.";
+    payBtn.disabled = true;
+    formInputs.forEach((input) => { input.readOnly = true; });
+
+    const stamp = document.createElement("p");
+    stamp.className = "stamp";
+    stamp.textContent = "Approved";
+    stamp.setAttribute("aria-hidden", "true");
+    paySection.classList.add("is-approved");
+    paySection.appendChild(stamp);
+});
+</script>
 </body>
 </html>
