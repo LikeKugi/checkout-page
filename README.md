@@ -110,6 +110,7 @@ The specs live in [`AGENTS.md`](./AGENTS.md); these are the checks the page must
 ```text
 .
 ├── AGENTS.md                  # the lab spec + the 18 test descriptions
+├── DESIGN.md                  # the design system: tokens, type, motifs, states, motion, trade-offs
 ├── index.html                 # the whole page: markup, <style>, <script>
 ├── package.json               # "npm test" entry point (dev dependency: jsdom)
 ├── package-lock.json
@@ -118,6 +119,8 @@ The specs live in [`AGENTS.md`](./AGENTS.md); these are the checks the page must
 ├── README.md
 └── .gitignore
 ```
+
+Docs map: **README.md** (what this is, how to run it) → **DESIGN.md** (why it looks the way it does) → **AGENTS.md** (the graded spec).
 
 ## How the work flowed (the agent loop)
 
